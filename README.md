@@ -107,6 +107,12 @@ Loki/Alertmanager.
 <img width="1948" height="1570" alt="image" src="https://github.com/user-attachments/assets/6295ffdf-d463-4cef-a711-5f59a26b5bdf" />
 <img width="1948" height="1570" alt="image" src="https://github.com/user-attachments/assets/a8bec440-0e04-48c0-9afe-a69c4a6853df" />
 <img width="2880" height="1800" alt="image" src="https://github.com/user-attachments/assets/4249b82d-46e6-46ff-8c46-54cb406034a5" />
+<img width="2880" height="1800" alt="image" src="https://github.com/user-attachments/assets/781e49d1-30fa-4e86-bbfc-8ec016938731" />
+<img width="2880" height="1800" alt="image" src="https://github.com/user-attachments/assets/a045786e-2524-4a08-9661-d95c9262361b" />
+<img width="2880" height="446" alt="image" src="https://github.com/user-attachments/assets/2ae39438-fd4e-4134-bb64-4f8285f6aab5" />
+
+## Findings:
+Prometheus is working correctly, and the alerts are definitely firing: you currently have 8 critical GpuMemoryNearOOM alerts and 8 warning GpuIdleButAllocated alerts across both gpu-lab-worker and gpu-lab-worker2, meaning every fake GPU is showing very high memory use (about 99%) while utilization is also very low (0%), which matches an OOM-risk plus stalled-idle pattern rather than normal training. The alerts have stayed active since around 22:48 to 22:49 UTC, so this is not a brief spike, and it explains why you should treat this as an active incident signal in the lab. GpuEccDoubleBitError is 0, which is good and suggests no simulated hardware ECC fault right now.
 
 
 
