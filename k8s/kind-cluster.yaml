@@ -1,0 +1,21 @@
+# 3-node kind cluster: 1 control-plane + 2 workers.
+# Two workers let us demonstrate multi-node scheduling and GPU-exhaustion
+# Pending scenarios across a small "fleet".
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: gpu-lab
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 30090   # Prometheus NodePort
+        hostPort: 30090
+      - containerPort: 30030   # Grafana NodePort
+        hostPort: 30030
+  - role: worker
+  - role: worker

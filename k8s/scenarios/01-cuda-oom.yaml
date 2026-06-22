@@ -1,0 +1,29 @@
+# SCENARIO 01 -- CUDA Out Of Memory.
+# The trainer climbs memory and dies with a torch.cuda.OutOfMemoryError at
+# global_step 12. restartPolicy=Never + backoffLimit drives Job failure; flip to
+# a Deployment/Never-with-restarts to show CrashLoopBackOff (see scenario 03).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trainer-oom
+  namespace: gpu-lab
+  labels: {scenario: cuda-oom}
+spec:
+  backoffLimit: 3            # k8s retries -> repeated OOM, like a real bad config
+  template:
+    metadata: {labels: {job-name: trainer-oom}}
+    spec:
+      restartPolicy: Never
+      nodeSelector: {nvidia.com/gpu.present: "true"}
+      containers:
+        - name: trainer
+          image: gpu-lab/trainer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: FAILURE_MODE, value: "cuda_oom"}
+            - {name: BATCH_SIZE, value: "1024"}   # the "too big" knob
+            - {name: WORLD_SIZE, value: "1"}
+            - {name: RANK, value: "0"}
+          resources:
+            requests: {nvidia.com/gpu: 1, cpu: 200m, memory: 512Mi}
+            limits:   {nvidia.com/gpu: 1}

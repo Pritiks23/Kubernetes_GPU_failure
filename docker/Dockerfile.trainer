@@ -1,0 +1,27 @@
+# Trainer image for the GPU Platform Failure Investigation Lab.
+#
+# PRODUCTION VERSION would start from nvidia/cuda:12.2.0-runtime-ubuntu22.04 and
+# install the CUDA build of torch. For a GPU-free, fast-to-build 1-Day lab we use
+# slim python + CPU torch (gloo backend). The job still reports as a GPU workload
+# and emits CUDA/NCCL-shaped telemetry, so every observability/RCA workflow holds.
+FROM python:3.10-slim
+
+LABEL org.opencontainers.image.title="gpu-failure-lab-trainer"
+LABEL org.opencontainers.image.description="Distributed PyTorch trainer with injectable failure modes"
+
+# CPU torch is large; this layer is cached so iterating on src/ is fast.
+COPY docker/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
+        torch==2.3.1
+
+WORKDIR /workspace
+COPY src/train.py /workspace/train.py
+COPY src/gpu_metrics_exporter.py /workspace/gpu_metrics_exporter.py
+
+# Defaults; overridden per-pod via env in the k8s manifests.
+ENV FAILURE_MODE=none \
+    EPOCHS=50 \
+    BATCH_SIZE=64 \
+    PYTHONUNBUFFERED=1
+
+ENTRYPOINT ["python", "/workspace/train.py"]

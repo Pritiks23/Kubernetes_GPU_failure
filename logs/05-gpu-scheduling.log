@@ -1,0 +1,25 @@
+# Captured: kubectl -n gpu-lab describe pod trainer-bigask-xxxxx
+
+Name:           trainer-bigask-7c9f8-w2k4p
+Namespace:      gpu-lab
+Status:         Pending
+Containers:
+  trainer:
+    Image:      gpu-lab/trainer:latest
+    Limits:     nvidia.com/gpu: 8
+    Requests:   nvidia.com/gpu: 8
+
+Events:
+  Type     Reason            Age                From               Message
+  ----     ------            ----               ----               -------
+  Warning  FailedScheduling  18s (x3 over 62s)  default-scheduler  0/3 nodes are available: 1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }, 2 Insufficient nvidia.com/gpu. preemption: 0/3 nodes are available: 1 Preemption is not helpful for scheduling, 2 No preemption victims found for incoming pod.
+
+# kubectl get nodes -o custom-columns=NODE:.metadata.name,GPU:.status.capacity.'nvidia\.com/gpu'
+# NODE                  GPU
+# gpu-lab-control-plane <none>
+# gpu-lab-worker        4
+# gpu-lab-worker2       4
+#
+# RCA: pod requests 8 GPUs; no single node advertises more than 4 -> permanently
+# Pending. A pod's GPU request must fit on ONE node. Fix: request <=4, or shard
+# into 8 single-GPU pods spread by the scheduler.

@@ -1,0 +1,28 @@
+# SCENARIO 05 -- Failed GPU scheduling (FailedScheduling / Unschedulable).
+# Requests 8 GPUs per pod, but each node only advertises 4. The scheduler cannot
+# place the pod -> stays Pending with event:
+#   "0/3 nodes are available: 2 Insufficient nvidia.com/gpu, 1 node(s) had
+#    untolerated taint {node-role.kubernetes.io/control-plane}."
+# This is a REAL scheduler decision against our simulated GPU capacity.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trainer-bigask
+  namespace: gpu-lab
+  labels: {scenario: gpu-scheduling}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: trainer-bigask}}
+  template:
+    metadata: {labels: {app: trainer-bigask}}
+    spec:
+      nodeSelector: {nvidia.com/gpu.present: "true"}
+      containers:
+        - name: trainer
+          image: gpu-lab/trainer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: FAILURE_MODE, value: "none"}
+          resources:
+            requests: {nvidia.com/gpu: 8}   # > 4 available on any node
+            limits:   {nvidia.com/gpu: 8}

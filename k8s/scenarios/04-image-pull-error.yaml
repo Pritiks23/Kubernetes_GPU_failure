@@ -1,0 +1,25 @@
+# SCENARIO 04 -- ImagePullBackOff / ErrImagePull.
+# References an image tag that does not exist in the kind cache and cannot be
+# pulled. Pod stays Pending->Waiting with Reason ErrImagePull then
+# ImagePullBackOff. Demonstrates registry/tag/secret triage.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trainer-badimage
+  namespace: gpu-lab
+  labels: {scenario: image-pull-error}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: trainer-badimage}}
+  template:
+    metadata: {labels: {app: trainer-badimage}}
+    spec:
+      nodeSelector: {nvidia.com/gpu.present: "true"}
+      containers:
+        - name: trainer
+          # Non-existent tag, and IfNotPresent won't find it locally either.
+          image: gpu-lab/trainer:v999-does-not-exist
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests: {nvidia.com/gpu: 1, cpu: 100m, memory: 256Mi}
+            limits:   {nvidia.com/gpu: 1}

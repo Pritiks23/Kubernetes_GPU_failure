@@ -1,0 +1,7 @@
+# Fake DCGM exporter image. Pure-stdlib, so it builds in seconds.
+FROM python:3.10-slim
+WORKDIR /workspace
+COPY src/gpu_metrics_exporter.py /workspace/gpu_metrics_exporter.py
+ENV PYTHONUNBUFFERED=1 PORT=9400 GPU_COUNT=1 SCENARIO=none
+EXPOSE 9400
+ENTRYPOINT ["python", "/workspace/gpu_metrics_exporter.py"]

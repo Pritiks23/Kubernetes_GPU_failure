@@ -1,0 +1,27 @@
+# Captured: kubectl -n gpu-lab logs <each rank of trainer-nccl>
+
+### rank 0 ###
+[2026-06-22 15:22:10] [rank0] [INFO] FAILURE_MODE=nccl_timeout epochs=50 batch_size=64
+[2026-06-22 15:22:10] [rank0] [INFO] initializing process group: backend=nccl init_method=env://
+[2026-06-22 15:22:10] [rank0] [INFO] NCCL INFO Bootstrap : Using eth0:10.244.0.7<0>
+[2026-06-22 15:22:10] [rank0] [INFO] NCCL INFO NET/Socket : Using [0]eth0:10.244.0.7<0>
+[2026-06-22 15:22:10] [rank0] [INFO] NCCL INFO Setting affinity for GPU 0 to 0fff
+[2026-06-22 15:22:10] [rank0] [INFO] waiting for all ranks to reach c10d rendezvous (timeout=600s)...
+[2026-06-22 15:32:11] [rank0] [ERROR] Watchdog caught collective operation timeout: WorkNCCL(OpType=ALLREDUCE, Timeout(ms)=600000) ran for 600351 milliseconds before timing out.
+[2026-06-22 15:32:11] [rank0] [ERROR] [Rank 0] Timeout waiting for ranks [2,3] to join. Aborting process group.
+[2026-06-22 15:32:11] [rank0] [ERROR] ProcessGroupNCCL.cpp:874 NCCL watchdog thread terminated with exception
+
+### rank 2 ###
+[2026-06-22 15:22:10] [rank2] [INFO] NCCL INFO Bootstrap : Using eth0:10.244.2.7<0>
+[2026-06-22 15:32:11] [rank2] [ERROR] torch.distributed.DistBackendError: NCCL communicator was aborted on rank 2.
+
+# Pod summary:
+# NAME                 READY   STATUS   RESTARTS   AGE
+# trainer-nccl-0-xxxx  0/1     Error    0          10m
+# trainer-nccl-1-xxxx  0/1     Error    0          10m
+# trainer-nccl-2-xxxx  0/1     Error    0          10m
+# trainer-nccl-3-xxxx  0/1     Error    0          10m
+#
+# RCA: in the real incident, ranks 2 & 3 were Pending (GPU exhaustion on their
+# node) and never joined the group; rank 0 timed out. Always check whether the
+# "timed-out" rank is the victim or the cause -> read the OTHER ranks first.

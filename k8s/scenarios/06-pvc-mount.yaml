@@ -1,0 +1,30 @@
+# SCENARIO 06 -- PVC mount failure (FailedMount / volume not bound).
+# Mounts a PVC that does not exist. Pod stuck in ContainerCreating with events:
+#   "persistentvolumeclaim 'nonexistent-dataset' not found" and
+#   "Unable to attach or mount volumes: unmounted volumes=[data] ... timed out".
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trainer-pvc
+  namespace: gpu-lab
+  labels: {scenario: pvc-mount}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: trainer-pvc}}
+  template:
+    metadata: {labels: {app: trainer-pvc}}
+    spec:
+      nodeSelector: {nvidia.com/gpu.present: "true"}
+      containers:
+        - name: trainer
+          image: gpu-lab/trainer:latest
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - {name: data, mountPath: /data}
+          resources:
+            requests: {nvidia.com/gpu: 1, cpu: 100m, memory: 256Mi}
+            limits:   {nvidia.com/gpu: 1}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nonexistent-dataset   # <-- does not exist

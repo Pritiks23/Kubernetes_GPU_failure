@@ -1,0 +1,47 @@
+# SCENARIO 07 -- Distributed training hang (deadlock, no crash).
+# 4-rank job. Rank 0 stalls inside a long synchronous checkpoint and stops
+# issuing collectives; the other ranks block forever in allreduce. The pods stay
+# Running with 0% GPU util and no log progress -- the hardest failure to triage
+# because nothing "fails". DCGM util drops to ~0 while pods are healthy.
+apiVersion: v1
+kind: Service
+metadata: {name: trainer-hang, namespace: gpu-lab}
+spec:
+  clusterIP: None
+  selector: {job-name: trainer-hang}
+  ports: [{name: c10d, port: 29500}]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trainer-hang
+  namespace: gpu-lab
+  labels: {scenario: training-hang}
+spec:
+  completions: 4
+  parallelism: 4
+  completionMode: Indexed
+  backoffLimit: 0
+  activeDeadlineSeconds: 600     # safety: k8s kills the hung job after 10m
+  template:
+    metadata: {labels: {job-name: trainer-hang}}
+    spec:
+      restartPolicy: Never
+      nodeSelector: {nvidia.com/gpu.present: "true"}
+      containers:
+        - name: trainer
+          image: gpu-lab/trainer:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh","-c"]
+          args:
+            - 'RANK=${JOB_COMPLETION_INDEX} exec python /workspace/train.py'
+          env:
+            - {name: FAILURE_MODE, value: "hang"}
+            - {name: WORLD_SIZE, value: "4"}
+            - {name: MASTER_ADDR, value: "trainer-hang"}
+            - {name: MASTER_PORT, value: "29500"}
+            - {name: NCCL_DEBUG, value: "INFO"}
+            - {name: TORCH_NCCL_BLOCKING_WAIT, value: "1"}
+          resources:
+            requests: {nvidia.com/gpu: 1, cpu: 150m, memory: 384Mi}
+            limits:   {nvidia.com/gpu: 1}

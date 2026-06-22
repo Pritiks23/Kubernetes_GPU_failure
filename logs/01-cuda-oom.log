@@ -1,0 +1,24 @@
+# Captured: kubectl -n gpu-lab logs job/trainer-oom
+[2026-06-22 15:10:02] [rank0] [INFO] starting trainer on host=trainer-oom-abc12
+[2026-06-22 15:10:02] [rank0] [INFO] world_size=1 rank=0 local_rank=0
+[2026-06-22 15:10:02] [rank0] [INFO] MASTER_ADDR=127.0.0.1 MASTER_PORT=29500
+[2026-06-22 15:10:02] [rank0] [INFO] FAILURE_MODE=cuda_oom epochs=50 batch_size=1024
+[2026-06-22 15:10:02] [rank0] [INFO] CUDA runtime initialized: device 0 = 'NVIDIA A100-SXM4-40GB' (40 GiB), driver 535.104.05, cuda 12.2
+[2026-06-22 15:10:03] [rank0] [INFO] initializing process group: backend=gloo init_method=env://
+[2026-06-22 15:10:03] [rank0] [INFO] epoch=0 step=0 global_step=0 loss=2.4931 throughput=812 img/s gpu_util=94% gpu_mem=28672MiB
+[2026-06-22 15:10:04] [rank0] [INFO] epoch=0 step=5 global_step=5 loss=2.3870 throughput=1190 img/s gpu_util=94% gpu_mem=28672MiB
+[2026-06-22 15:10:05] [rank0] [INFO] epoch=0 step=10 global_step=10 loss=2.2104 throughput=1240 img/s gpu_util=94% gpu_mem=28672MiB
+[2026-06-22 15:10:05] [rank0] [ERROR] Trying to allocate 2.00 GiB. GPU 0 has a total capacity of 40.00 GiB of which 312.00 MiB is free.
+Traceback (most recent call last):
+  File "/workspace/train.py", line 211, in <module>
+    loss.backward()
+  File "/usr/local/lib/python3.10/site-packages/torch/_tensor.py", line 522, in backward
+    torch.autograd.backward(self, gradient, ...)
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 GiB. GPU 0 has a total capacity of 40.00 GiB of which 312.00 MiB is free. Process 1 has 39.40 GiB memory in use. Of the allocated memory 39.50 GiB is allocated by PyTorch, and 268.00 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.
+
+# kubectl -n gpu-lab get pod trainer-oom-abc12 -o jsonpath='...lastState...'
+lastState.terminated.reason=Error  exitCode=1
+# After backoffLimit retries (each re-OOMs):
+# NAME                READY   STATUS   RESTARTS   AGE
+# trainer-oom-abc12   0/1     Error    0          40s
+# Job status: BackoffLimitExceeded

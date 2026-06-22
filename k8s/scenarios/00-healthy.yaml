@@ -1,0 +1,39 @@
+# Baseline: a healthy 2-rank distributed job that requests 1 GPU per rank and
+# runs to completion. Use this to show the "green" path before breaking things.
+apiVersion: v1
+kind: Service
+metadata: {name: trainer-healthy, namespace: gpu-lab}
+spec:
+  clusterIP: None              # headless: stable DNS for rank rendezvous
+  selector: {job-name: trainer-healthy}
+  ports: [{name: c10d, port: 29500}]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trainer-healthy
+  namespace: gpu-lab
+  labels: {scenario: healthy}
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 2
+  template:
+    metadata: {labels: {job-name: trainer-healthy}}
+    spec:
+      restartPolicy: Never
+      nodeSelector: {nvidia.com/gpu.present: "true"}
+      containers:
+        - name: trainer
+          image: gpu-lab/trainer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: FAILURE_MODE, value: "none"}
+            - {name: WORLD_SIZE, value: "1"}
+            - {name: RANK, value: "0"}
+            - {name: MASTER_ADDR, value: "trainer-healthy"}
+            - {name: MASTER_PORT, value: "29500"}
+            - {name: EPOCHS, value: "30"}
+          resources:
+            requests: {nvidia.com/gpu: 1, cpu: 200m, memory: 512Mi}
+            limits:   {nvidia.com/gpu: 1}

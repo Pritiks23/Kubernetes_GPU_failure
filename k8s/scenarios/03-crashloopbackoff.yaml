@@ -1,0 +1,28 @@
+# SCENARIO 03 -- CrashLoopBackOff.
+# A Deployment (not a Job) with a container that crashes early (exit 139).
+# Because restartPolicy defaults to Always for Deployments, the kubelet restarts
+# it with exponential backoff -> Reason: CrashLoopBackOff, climbing RESTARTS.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trainer-crashloop
+  namespace: gpu-lab
+  labels: {scenario: crashloopbackoff}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: trainer-crashloop}}
+  template:
+    metadata: {labels: {app: trainer-crashloop}}
+    spec:
+      nodeSelector: {nvidia.com/gpu.present: "true"}
+      containers:
+        - name: trainer
+          image: gpu-lab/trainer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: FAILURE_MODE, value: "crash"}   # exits 139 at step 5
+            - {name: WORLD_SIZE, value: "1"}
+            - {name: RANK, value: "0"}
+          resources:
+            requests: {nvidia.com/gpu: 1, cpu: 150m, memory: 384Mi}
+            limits:   {nvidia.com/gpu: 1}

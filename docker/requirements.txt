@@ -1,0 +1,3 @@
+# CPU-only torch keeps the image small and GPU-free while preserving the
+# real torch.distributed APIs the lab exercises.
+torch==2.3.1

@@ -1,0 +1,46 @@
+# Fake DCGM exporter as a DaemonSet -- one per node, exactly how
+# nvidia/dcgm-exporter is deployed in real GPU clusters. Exposes :9400/metrics.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dcgm-exporter
+  namespace: gpu-lab
+  labels: {app: dcgm-exporter}
+spec:
+  selector:
+    matchLabels: {app: dcgm-exporter}
+  template:
+    metadata:
+      labels: {app: dcgm-exporter}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9400"
+    spec:
+      # Only schedule onto our simulated GPU nodes.
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      containers:
+        - name: exporter
+          image: gpu-lab/exporter:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 9400, name: metrics}]
+          env:
+            - name: NODE_NAME
+              valueFrom: {fieldRef: {fieldPath: spec.nodeName}}
+            - name: GPU_COUNT
+              value: "4"
+            - name: SCENARIO        # flip per-incident via `kubectl set env`
+              value: "none"
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits:   {cpu: 100m, memory: 64Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcgm-exporter
+  namespace: gpu-lab
+  labels: {app: dcgm-exporter}
+spec:
+  selector: {app: dcgm-exporter}
+  ports: [{name: metrics, port: 9400, targetPort: 9400}]
