@@ -97,3 +97,20 @@ See the comparison table in [docs/architecture.md](docs/architecture.md#1-day-vs
 Headlines: real GPUs + NVIDIA device plugin, NCCL over NVLink/IB, real
 dcgm-exporter, `torchrun` + a gang scheduler (Kueue/Volcano), and
 Loki/Alertmanager.
+
+
+
+<img width="2842" height="1766" alt="image" src="https://github.com/user-attachments/assets/d2ec1c85-403f-46de-9db7-d0efce932046" />
+<img width="1352" height="422" alt="image" src="https://github.com/user-attachments/assets/fa2c03a9-99dd-412d-8854-005326922912" />
+<img width="1948" height="730" alt="image" src="https://github.com/user-attachments/assets/11cf8644-dba7-4df5-bf1e-9f1721f2099b" />
+<img width="1948" height="1570" alt="image" src="https://github.com/user-attachments/assets/d00e3661-d205-42a1-84a6-320863d3e656" />
+<img width="1948" height="1570" alt="image" src="https://github.com/user-attachments/assets/6295ffdf-d463-4cef-a711-5f59a26b5bdf" />
+<img width="1948" height="1570" alt="image" src="https://github.com/user-attachments/assets/a8bec440-0e04-48c0-9afe-a69c4a6853df" />
+<img width="2880" height="1800" alt="image" src="https://github.com/user-attachments/assets/4249b82d-46e6-46ff-8c46-54cb406034a5" />
+
+
+
+
+
+
+
