@@ -87,7 +87,9 @@ def metrics_text():
         ]
     return "\n".join(lines) + "\n"
 
-
+# The exporter runs a lightweight HTTP server on port 9400. When Prometheus scrapes /metrics, the handler calls
+# metrics_text() to generate DCGM-style metrics, returns them in Prometheus exposition format, and Prometheus stores
+# them as time-series data for Grafana dashboards and alerting.
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path != "/metrics":
